@@ -10,20 +10,16 @@ import time
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from embedding_service.embed import get_embedding
+from flask import request
 
 def getEmbeddings():
     queryResults = query("""PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
 SELECT ?sub ?embedding
 WHERE {
-    VALUES (?embedding) { ("[1,3,3,7]") }
+    ?sub ext:hasEmbedding ?embedding.
     ?sub a <https://productencatalogus.data.vlaanderen.be/ns/ipdc-lpdc#InstancePublicServiceSnapshot>.
-}""")
-    # ?sub ext:hasEmbedding ?embedding.
-
-    print("got results")
-
-    # TODO: loop and combine paginated responses
+} LIMIT 500""")
 
     return [(binding["sub"]["value"], json.loads(binding["embedding"]["value"]))
             for binding in queryResults["results"]["bindings"]]
@@ -31,21 +27,17 @@ WHERE {
 #@app.route("/query-weights")
 def queryWeights(queryEmbeddings):    
     dataEmbeddings = getEmbeddings()
-
     similarities = [cosine_similarity([queryEmbeddings], [embedding[1]])[0][0] for embedding in dataEmbeddings]
-
     most_similar_index = np.argmax(similarities)
-
     return dataEmbeddings[most_similar_index]
 
-@app.route("/query-sentence")
+@app.route("/query-sentence",methods=["GET"])
 def querySentence():
-    queryEmbeddings = get_embedding(json.loads(request.args.get('query')))
-
+    query = request.args.get('source')
+    queryEmbeddings = get_embedding(query)
     product = queryWeights(queryEmbeddings)
 
-    return product 
-
+    return product[0]
 
 ###################
 ### FUTURE WORK ###
