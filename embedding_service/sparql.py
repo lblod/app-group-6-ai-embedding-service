@@ -14,13 +14,13 @@ WHERE {
   GRAPH <http://mu.semte.ch/graphs/public> {
     ?subject ?p ipdc:InstancePublicServiceSnapshot .
     ?subject dcterms:title ?title .
+    FILTER NOT EXISTS { ?subject ext:hasEmbedding ?embedding }
     FILTER (lang(?title) = "nl")
     ?subject dcterms:description ?description .
     FILTER (lang(?description) = "nl")
   }
 }
-ORDER BY ?subject
-"""
+ORDER BY ?subject"""
 
 def get_all_products():
     results_raw = query(QUERY_GET_ALL_PRODUCTS)
