@@ -1,42 +1,33 @@
 from embedding_service.embed import calculate_embedding
-from embedding_service.sparql import get_all_products
-from embedding_service.sparql import save_embeddings
+from embedding_service.sparql import query_products_without_embedding, save_embeddings, query_embeddings
 import json
 from threading import Thread
 from requests import post
-from escape_helpers import sparql_escape_string, sparql_escape_uri
-from helpers import query, update
+from helpers import query
 import time
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from flask import request
 
-def getEmbeddings():
-    queryResults = query("""PREFIX dct: <http://purl.org/dc/terms/>
-    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
-SELECT ?sub ?embedding
-WHERE {
-    ?sub ext:hasEmbedding ?embedding.
-    ?sub a <https://productencatalogus.data.vlaanderen.be/ns/ipdc-lpdc#InstancePublicServiceSnapshot>.
-} LIMIT 500""")
-
-    return [(binding["sub"]["value"], json.loads(binding["embedding"]["value"]))
-            for binding in queryResults["results"]["bindings"]]
-
-#@app.route("/query-weights")
-def queryWeights(queryEmbeddings):    
-    dataEmbeddings = getEmbeddings()
-    similarities = [cosine_similarity([queryEmbeddings], [embedding[1]])[0][0] for embedding in dataEmbeddings]
-    most_similar_index = np.argmax(similarities)
-    return dataEmbeddings[most_similar_index]
+def queryWeights(queryEmbeddings, solutions=20):
+    dataEmbeddings = query_embeddings()
+    similarities = np.array([cosine_similarity([queryEmbeddings], [embedding[1]])[0][0] for embedding in dataEmbeddings])
+    # We could get the max index like this:
+    # most_similar_index = np.argmax(similarities)
+    # But we get a few more by getting the N most similar (unsorted)
+    n_most_similar_indexes = np.argpartition(similarities,-solutions)[-solutions:]
+    # And then sorting those indexes based on the similarity
+    sorted_n_best_indexes = n_most_similar_indexes[np.argsort(-similarities[n_most_similar_indexes])] # sort indexes by similarity
+    # To finally return the dataEmbedding containing (product,embedding) for best -> worst index
+    return [dataEmbeddings[i] for i in sorted_n_best_indexes]
 
 @app.route("/query-sentence",methods=["GET"])
 def querySentence():
     query = request.args.get('source')
     queryEmbeddings = calculate_embedding(query)
-    product = queryWeights(queryEmbeddings)
+    products_and_embeddings = queryWeights(queryEmbeddings)
 
-    return product[0]
+    return [product[0] for product in products_and_embeddings]
 
 ###################
 ### FUTURE WORK ###
@@ -53,17 +44,23 @@ def querySentence():
 def ingest():
     # TODO inject in DB
     print("Starting ingest process")
-    products = get_all_products()
+    products = query_products_without_embedding()
 
     for id, prod_descript in products.items():
+        print("Processing {}".format(id), flush=True)
         emb = calculate_embedding(prod_descript)
         save_embeddings(id, json.dumps(emb.tolist()))
 
-    print("Wrapping up ingestion process")
+    print("Wrapping up ingestion process", flush=True)
+
+    return "OK"
 
 
 def ingestWithDelay():
     time.sleep(1)
+    # This is somewhat inline with receiving a call from the
+    # delta-notifier, though a good implementation would clear the
+    # embeddings of the relevant snapshots.
     post("http://localhost/ingest")
 
 Thread(target = lambda: ingestWithDelay()).start()
