@@ -61,11 +61,15 @@ def querySentence():
 @app.route("/ingest", methods=["POST"])
 def ingest():
     # TODO inject in DB
+    print("Starting ingest process")
     products = get_all_products()
 
     for id, prod_descript in products.items():
         emb = get_embedding(prod_descript)
-        save_embeddings(id, json.dumps(emb))
+        save_embeddings(id, json.dumps(emb.tolist()))
+
+    print("Wrapping up ingestion process")
+
 
 def ingestWithDelay():
     time.sleep(1)
