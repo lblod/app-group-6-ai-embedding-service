@@ -9,10 +9,14 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from flask import request
 
-embeddings = None
+cachedEmbeddings = None
 
 def queryWeights(queryEmbeddings, solutions=20):
-    dataEmbeddings = query_embeddings() if embeddings == None else embeddings
+    global cachedEmbeddings
+    if cachedEmbeddings == None:
+        cachedEmbeddings = query_embeddings()
+    dataEmbeddings = cachedEmbeddings
+
     similarities = np.array([cosine_similarity([queryEmbeddings], [embedding[1]])[0][0] for embedding in dataEmbeddings])
     # We could get the max index like this:
     # most_similar_index = np.argmax(similarities)
@@ -59,10 +63,11 @@ def ingest():
 
 @app.route("/delta", methods=["POST"])
 def delta():
+    global cachedEmbeddings
     # TODO: delete weights for products which have changed
     ingest()
     # clear cached embeddings
-    embeddings = None
+    cachedEmbeddings = None
 
 def ingestWithDelay():
     time.sleep(1)
