@@ -4,3 +4,4 @@ SPARQLWrapper
 requests
 scikit-learn
 gradio
+numpy
