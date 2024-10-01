@@ -9,8 +9,8 @@ if DATA_PATH.exists():
     print("model is already loaded")
 else:
     # Load the pre-trained RobBERT model and tokenizer (only the base transformer, no classification head)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)  # Load without the classification head
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModel.from_pretrained(MODEL_NAME)  # Load without the classification head
 
     # save to /data
     tokenizer.save_pretrained("/data/tokenizer")
