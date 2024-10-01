@@ -1,8 +1,11 @@
 from escape_helpers import sparql_escape_string, sparql_escape_uri
 from helpers import query, update
 from string import Template
+import logging
 
 from SPARQLWrapper import SPARQLWrapper, JSON
+
+LOG = logging.getLogger(__name__)
 
 # TODO: load from file
 QUERY_GET_ALL_PRODUCTS = """
@@ -25,7 +28,7 @@ ORDER BY ?subject
 def get_all_products():
     results_raw = query(QUERY_GET_ALL_PRODUCTS)
 
-    print("We have {} products".format( len(results_raw['results']['bindings']) ))
+    LOG.info("We have {} products".format( len(results_raw['results']['bindings'])))
 
     products = {}
     for prod in results_raw['results']['bindings']:
