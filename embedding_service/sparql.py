@@ -32,3 +32,12 @@ def get_all_products():
         products[prod['subject']['value']] = prod['title']['value'] + " | " + prod["description"]['value']
 
     return products
+
+def save_product( uri, embedding ):
+    template = Template("""
+      PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+      INSERT DATA {
+        $uri ext:hasEmbedding $embedding.
+      }""")
+
+    update( template.substitute( uri=sparql_escape_uri( uri ), embedding=sparql_escape_string( embedding ) )

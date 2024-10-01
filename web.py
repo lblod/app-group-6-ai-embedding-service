@@ -1,5 +1,6 @@
 from embedding_service.embed import get_embedding
 from embedding_service.sparql import get_all_products
+from embedding_service.sparql import save_embeddings
 import json
 from threading import Thread
 from requests import post
@@ -60,6 +61,7 @@ def ingest():
 
     for id, prod_descript in products.items():
         emb = get_embedding(prod_descript)
+        save_embeddings(id, json.dumps(emb))
 
 def ingestWithDelay():
     time.sleep(1)
