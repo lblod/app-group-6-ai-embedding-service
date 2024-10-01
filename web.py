@@ -7,6 +7,9 @@ from requests import post
 from escape_helpers import sparql_escape_string, sparql_escape_uri
 from helpers import query, update
 import time
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from embedding_service.embed import get_embedding
 
 def getEmbeddings():
     queryResults = query("""PREFIX dct: <http://purl.org/dc/terms/>
@@ -25,22 +28,23 @@ WHERE {
     return [(binding["sub"]["value"], json.loads(binding["embedding"]["value"]))
             for binding in queryResults["results"]["bindings"]]
 
-@app.route("/query-weights")
-def queryWeights():
-    queryEmbeddings = json.loads(request.args.get('query'))
+#@app.route("/query-weights")
+def queryWeights(queryEmbeddings):    
     dataEmbeddings = getEmbeddings()
 
-    # TODO: find optimal solution
+    similarities = [cosine_similarity([queryEmbeddings], [embedding[1]])[0][0] for embedding in dataEmbeddings]
 
-    # TODO: return ?sub (first half of tuple in embeddings)
+    most_similar_index = np.argmax(similarities)
 
-# TODO: future, maybe in hackathon
+    return dataEmbeddings[most_similar_index]
+
 @app.route("/query-sentence")
 def querySentence():
-    # TODO: we _might_ want to implement this.  This will wire services
-    # together but this part of AI is more systems programming so that
-    # makes sense.
-    print("hello")
+    queryEmbeddings = get_embedding(json.loads(request.args.get('query')))
+
+    product = queryWeights(queryEmbeddings)
+
+    return product 
 
 
 ###################
