@@ -1,9 +1,10 @@
 from escape_helpers import sparql_escape_string, sparql_escape_uri
 from helpers import query, update
 from string import Template
+import logging
 import json
 
-from SPARQLWrapper import SPARQLWrapper, JSON
+LOG = logging.getLogger(__name__)
 
 def paginated_bindings(sparql_query, offset=0, limit=200):
     execute_query = lambda: query("{} LIMIT {} OFFSET {}".format(sparql_query, limit, offset))['results']['bindings']
@@ -35,7 +36,7 @@ def query_products_without_embedding():
         }
         ORDER BY ?subject""")
 
-    print("We have {} products".format( len(all_results) ), flush=True)
+    LOG.info("We have {} products".format( len(results_raw['results']['bindings'])))
 
     products = {}
     for prod in all_results:
