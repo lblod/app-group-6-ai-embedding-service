@@ -4,7 +4,7 @@ import torch
 TOKENIZER = RobertaTokenizer.from_pretrained("/data/tokenizer")
 MODEL = RobertaModel.from_pretrained("/data/model", torch_dtype="auto")
 
-def get_embedding(text: str) -> list:
+def calculate_embedding(text: str) -> list:
     inputs = TOKENIZER(text, return_tensors="pt", truncation=True, padding=True)
 
     with torch.no_grad():  # We don't need gradients for embeddings

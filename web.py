@@ -1,4 +1,4 @@
-from embedding_service.embed import get_embedding
+from embedding_service.embed import calculate_embedding
 from embedding_service.sparql import get_all_products
 from embedding_service.sparql import save_embeddings
 import json
@@ -9,7 +9,6 @@ from helpers import query, update
 import time
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from embedding_service.embed import get_embedding
 from flask import request
 
 def getEmbeddings():
@@ -34,7 +33,7 @@ def queryWeights(queryEmbeddings):
 @app.route("/query-sentence",methods=["GET"])
 def querySentence():
     query = request.args.get('source')
-    queryEmbeddings = get_embedding(query)
+    queryEmbeddings = calculate_embedding(query)
     product = queryWeights(queryEmbeddings)
 
     return product[0]
@@ -57,7 +56,7 @@ def ingest():
     products = get_all_products()
 
     for id, prod_descript in products.items():
-        emb = get_embedding(prod_descript)
+        emb = calculate_embedding(prod_descript)
         save_embeddings(id, json.dumps(emb.tolist()))
 
     print("Wrapping up ingestion process")
