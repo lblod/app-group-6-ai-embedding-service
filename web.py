@@ -70,7 +70,7 @@ def delta():
     cachedEmbeddings = None
 
 def ingestWithDelay():
-    time.sleep(1)
+    time.sleep(30)
     # This is somewhat inline with receiving a call from the
     # delta-notifier, though a good implementation would clear the
     # embeddings of the relevant snapshots.
