@@ -8,6 +8,9 @@ import time
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from flask import request
+import logging
+
+LOG = logging.getLogger(__name__)
 
 cachedEmbeddings = None
 
@@ -49,15 +52,15 @@ def querySentence():
 @app.route("/ingest", methods=["POST"])
 def ingest():
     # TODO inject in DB
-    print("Starting ingest process")
+    LOG.info('start ingest process')
     products = query_products_without_embedding()
 
     for id, prod_descript in products.items():
-        print("Processing {}".format(id), flush=True)
+        LOG.info(f'processing {id}')
         emb = calculate_embedding(prod_descript)
         save_embeddings(id, json.dumps(emb.tolist()))
 
-    print("Wrapping up ingestion process", flush=True)
+    LOG.info('Wrapping up ingestion process')
 
     return "OK"
 
