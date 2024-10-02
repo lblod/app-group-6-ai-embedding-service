@@ -36,7 +36,7 @@ def query_products_without_embedding():
         }
         ORDER BY ?subject""")
 
-    LOG.info("We have {} products".format( len(results_raw['results']['bindings'])))
+    LOG.info("We have {} products".format(len(all_results['results']['bindings'])))
 
     products = {}
     for prod in all_results:
